@@ -157,7 +157,8 @@ QString MainWindow::applyFilterText(const QString &text)
   ba.replace(0x0a, QLatin1String(" "));
   ba.replace(0x0d, QLatin1String(" "));
 
-  ba = Utf8Converter::convertAllUtf8ToNames(ba);
+  // Don't do this, it will speak funny
+  // ba = Utf8Converter::convertAllUtf8ToNames(ba);
   QString rtval(ba);
 
   return rtval;
