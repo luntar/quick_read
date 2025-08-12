@@ -11,6 +11,10 @@ const chart = new Chart(ctx, {
       borderColor: 'rgb(75, 192, 192)',
       tension: 0.1
     }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false
   }
 });
 
