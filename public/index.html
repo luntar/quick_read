@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Real-Time Graph Demo</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <h1>Real-Time Graph with WebSockets</h1>
+  <canvas id="chart" width="400" height="200"></canvas>
+
+  <h2>Persist a Value</h2>
+  <form id="value-form">
+    <input type="text" id="key" placeholder="Key" required />
+    <input type="text" id="value" placeholder="Value" />
+    <button type="submit">Save</button>
+  </form>
+
+  <h3>Saved Values</h3>
+  <ul id="values-list"></ul>
+
+  <script src="app.js"></script>
+</body>
+</html>

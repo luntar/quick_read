@@ -1,7 +1,0 @@
- AssFoo:hello
- Bob:Hi
- Bob:will you help me?
- AssFoo:Yes
- AssFoo:I can help
- AssFoo:will you let me?
- Bob:yes
