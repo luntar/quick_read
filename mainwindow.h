@@ -95,7 +95,13 @@ private slots:
 
   void on_ruleSyntaxPushButton_clicked();
 
+  void on_pushButton_2_clicked();
+
   private:
+  void download_rules_file();
+  void upload_rules_file();
+
+
   void setTextDisplay(QString textToSpeak);
   void updateHistoryButtons();
   bool isRuleStrValid(const QString& ruleText);
@@ -149,8 +155,13 @@ private slots:
   bool textNotSameOrSameCountTrigger(const QString& str);
 
   const QString getEOLSymbole();
+  QString get_default_rules_path() const;
+
+
   protected:
   void closeEvent(QCloseEvent* event) override;
+
+      QString _pending_local_file_path;
 };
 
 #endif

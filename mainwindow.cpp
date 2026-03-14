@@ -26,6 +26,7 @@ Some of this file was inspired/taken from the Text2Speech example
 #include <QSettings>
 
 #include "QStringList"
+#include "S3_Upload_Url_Client.h"
 #include "Utf8ToName.h"
 #include <QDeadlineTimer>
 #include <QDebug>
@@ -35,6 +36,15 @@ Some of this file was inspired/taken from the Text2Speech example
 #include <QMimeData>
 #include <QTimer>
 #include <QStandardPaths>
+
+
+#include "Presigned_Url_Text_File_Uploader.h"
+#include "Presigned_Url_Text_File_Downloader.h"
+#include "S3_Download_Url_Client.h"
+#include "S3_Upload_Url_Client.h"
+
+const QString k_lambda_url =
+    "https://lfnq2ft2fp265hxaht3dv7arpi0kwakw.lambda-url.us-west-1.on.aws/";
 
 
 static const int kMaxTextStackSize = 50;
@@ -77,6 +87,18 @@ MainWindow::MainWindow(QWidget* parent)
   trayIcon->setIcon(QIcon("://testmode_on.png"));
   trayIcon->setToolTip("Quick Read, Text2Speech");
   trayIcon->show();
+
+    download_rules_file();
+
+
+
+
+
+
+
+//  auto* downloader = new Presigned_Url_Text_File_Downloader(this);
+
+
 
 
 }
@@ -738,10 +760,14 @@ void MainWindow::saveSliderValue(QSettings& settings, QSlider* slider)
   settings.setValue(slider->objectName(), val);
 }
 
+QString MainWindow::get_default_rules_path() const {
+    return QDir::toNativeSeparators(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/" + QApplication::applicationName());
+}
+
 void MainWindow::saveRules()
 {
   QSettings settings;
-  QString defaultRulesPath = QDir::toNativeSeparators(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/" + QApplication::applicationName());
+    QString defaultRulesPath = get_default_rules_path();
   QString rulesPath = settings.value("rulesPath",defaultRulesPath).toString();
   QSettings rulessettings(QDir::toNativeSeparators(rulesPath + "/rules.ini"),QSettings::IniFormat);
   rulessettings.remove("rules");
@@ -752,26 +778,30 @@ void MainWindow::saveRules()
     rulessettings.setValue("rulestr", ui.listWidget->item(i)->text());
   }
   rulessettings.endArray();
+
+  upload_rules_file();
 }
 
 void MainWindow::restoreRules()
 {
+    download_rules_file();
+
     QSettings settings;
 
     QString defaultRulesPath = QDir::toNativeSeparators(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/" + QApplication::applicationName());
     QString rulesPath = settings.value("rulesPath",defaultRulesPath).toString();
     QSettings rulessettings(QDir::toNativeSeparators(rulesPath + "/rules.ini"),QSettings::IniFormat);
     m_rules.clear();
-  int size = rulessettings.beginReadArray("rules");
-  for (int i = 0; i < size; ++i)
-  {
-    rulessettings.setArrayIndex(i);
-    QString rulestr;
-    rulestr = rulessettings.value("rulestr").toString();
-    ui.listWidget->addItem(rulestr);
-    m_rules << rulestr;
-  }
-  rulessettings.endArray();
+    int size = rulessettings.beginReadArray("rules");
+    for (int i = 0; i < size; ++i)
+    {
+        rulessettings.setArrayIndex(i);
+        QString rulestr;
+        rulestr = rulessettings.value("rulestr").toString();
+        ui.listWidget->addItem(rulestr);
+        m_rules << rulestr;
+    }
+    rulessettings.endArray();
 }
 
 QString MainWindow::rulesToString()
@@ -810,6 +840,7 @@ void MainWindow::saveSystemState()
 
 
   saveRules();
+
 }
 
 void MainWindow::restoreWindowVis()
@@ -1126,5 +1157,114 @@ void MainWindow::on_ruleSyntaxPushButton_clicked()
         this,
         tr("Rule Syntax"),
         msgList.join("\n"));
+}
+
+
+
+void MainWindow::upload_rules_file() {
+
+    QString  file_path = get_default_rules_path() + "\\rules.ini";
+
+
+    auto* url_client = new S3_Upload_Client(k_lambda_url, this);
+
+    auto* uploader = new Presigned_Url_Text_File_Uploader(this);
+
+    QObject::connect(
+        uploader,
+        &Presigned_Url_Text_File_Uploader::upload_failed,
+        [](const QString& error_text) {
+            qDebug() << "---------------------";
+            qDebug() << "upload failed:" << error_text;
+            qDebug() << "---------------------";
+        });
+
+    QObject::connect(
+        uploader,
+        &Presigned_Url_Text_File_Uploader::upload_complete,
+        [](const QString& object_key) {
+            qDebug() << "Upload success:" << object_key;
+        });
+
+
+    QObject::connect(
+        url_client,
+        &S3_Upload_Client::upload_url_ready,
+        [uploader,file_path](const QString& upload_url, const QString& object_key) {
+
+            qDebug() << "Uploading foobar" << "\n";
+            uploader->upload_text_file(
+                file_path,
+                upload_url,
+                object_key);
+
+
+            // qDebug() << "upload_url =" << upload_url;
+            qDebug() << "object_key =" << object_key;
+        });
+
+    QObject::connect(
+        url_client,
+        &S3_Upload_Client::request_failed,
+        [](const QString& error_text) {
+            qDebug() << "request_failed:" << error_text;
+        });
+
+    url_client->request_upload_url("my_qt_app", "instance_001");
+}
+
+void MainWindow::download_rules_file() {
+
+
+    auto* download_url_client = new S3_Download_Url_Client(k_lambda_url,this);
+    auto* s3_download_rules_file = new Presigned_Url_Text_File_Downloader(this);
+    QString  file_path = get_default_rules_path() + "\\rules.ini";
+    QObject::connect(
+        download_url_client,
+        &S3_Download_Url_Client::download_url_ready,
+        [s3_download_rules_file,file_path](const QString& download_url, const QString& object_key) {
+            s3_download_rules_file->download_text_file(download_url,file_path);
+            (void)object_key;
+
+            //qDebug() << "DOWN upload_url =" << download_url;
+            // qDebug() << "DOWN object_key =" << object_key;
+        });
+
+    QObject::connect(
+        download_url_client,
+        &S3_Download_Url_Client::request_failed,
+        [](const QString& error_text) {
+            qDebug() << "DOWN request_failed:" << error_text;
+        });
+
+
+    QObject::connect(
+        s3_download_rules_file,
+        &Presigned_Url_Text_File_Downloader::download_failed,
+        [](const QString& error_text) {
+            qDebug() << "---------------------";
+            qDebug() << "Download Failed:" << error_text;
+            qDebug() << "---------------------";
+        });
+
+    QObject::connect(
+        s3_download_rules_file,
+        &Presigned_Url_Text_File_Downloader::download_complete,
+        [](const QString& file_path, const QString& object_key) {
+
+            qDebug() << "Download success: path = " << file_path;
+            // qDebug() << "Download Object Key:" << object_key;
+        });
+
+
+
+    download_url_client->request_download_url("instance_002");
+
+}
+
+
+void MainWindow::on_pushButton_2_clicked()
+{
+    download_rules_file();
 }
 

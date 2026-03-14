@@ -17,12 +17,18 @@
 **********************************************************************/
 
 #include <QApplication>
+#include <QCoreApplication>
+#include <QObject>
+#include <QDebug>
+
+
+
 
 #include "mainwindow.h"
 static const QString kVersionString = "1.0.5";
 int main(int argc, char* argv[])
 {
-  QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+  //QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
   QApplication app(argc, argv);
   app.setApplicationName("QuickRead");
   app.setApplicationVersion(kVersionString);

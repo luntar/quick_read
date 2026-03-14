@@ -44,6 +44,8 @@ QMAKE_TARGET_COPYRIGHT = "Copyright \251 Brinko 2018"
 RC_ICONS = appicon.ico
 
 SOURCES = main.cpp \
+          Presigned_Url_Text_File_Downloader.cpp \
+          Presigned_Url_Text_File_Uploader.cpp \
           mainwindow.cpp \
           listwidget.cpp \
           TtsTextTools.cpp \
@@ -51,6 +53,11 @@ SOURCES = main.cpp \
           readingstatusanimator.cpp
 
 HEADERS = \
+    AR_ASSERT.h \
+    Presigned_Url_Text_File_Downloader.h \
+    Presigned_Url_Text_File_Uploader.h \
+    S3_Download_Url_Client.h \
+    S3_Upload_Url_Client.h \
     mainwindow.h \
     listwidget.h \
     TtsTextTools.h \
