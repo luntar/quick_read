@@ -88,12 +88,6 @@ MainWindow::MainWindow(QWidget* parent)
   trayIcon->setToolTip("Quick Read, Text2Speech");
   trayIcon->show();
 
-    download_rules_file();
-
-
-
-
-
 
 
 //  auto* downloader = new Presigned_Url_Text_File_Downloader(this);
@@ -235,7 +229,8 @@ void transform_string(QString &text)
     const static auto regex = QRegularExpression(R"(\b\w+: )",QRegularExpression::CaseInsensitiveOption);
 
     int index = 0;
-    int remove_count = 0;
+    int remove_count=0;
+    (void)remove_count;
     QString first_two;
     while (index < text.length()) {
         QString str_one, str_two;
@@ -1036,6 +1031,7 @@ void MainWindow::on_delPushButton_clicked()
   {
       ui.listWidget->setCurrentRow(ui.listWidget->count()-1);
   }
+
 }
 
 void MainWindow::on_restorePushButton_clicked()
@@ -1165,7 +1161,6 @@ void MainWindow::upload_rules_file() {
 
     QString  file_path = get_default_rules_path() + "\\rules.ini";
 
-
     auto* url_client = new S3_Upload_Client(k_lambda_url, this);
 
     auto* uploader = new Presigned_Url_Text_File_Uploader(this);
@@ -1183,7 +1178,8 @@ void MainWindow::upload_rules_file() {
         uploader,
         &Presigned_Url_Text_File_Uploader::upload_complete,
         [](const QString& object_key) {
-            qDebug() << "Upload success:" << object_key;
+            (void)object_key;
+            // qDebug() << "Upload success:" << object_key;
         });
 
 
@@ -1191,16 +1187,9 @@ void MainWindow::upload_rules_file() {
         url_client,
         &S3_Upload_Client::upload_url_ready,
         [uploader,file_path](const QString& upload_url, const QString& object_key) {
-
-            qDebug() << "Uploading foobar" << "\n";
-            uploader->upload_text_file(
-                file_path,
-                upload_url,
-                object_key);
-
-
+            uploader->upload_text_file(file_path,upload_url,object_key);
             // qDebug() << "upload_url =" << upload_url;
-            qDebug() << "object_key =" << object_key;
+            // qDebug() << "object_key =" << object_key;
         });
 
     QObject::connect(
@@ -1227,7 +1216,7 @@ void MainWindow::download_rules_file() {
             (void)object_key;
 
             //qDebug() << "DOWN upload_url =" << download_url;
-            // qDebug() << "DOWN object_key =" << object_key;
+            qDebug() << "DOWN object_key =" << object_key;
         });
 
     QObject::connect(
@@ -1251,9 +1240,11 @@ void MainWindow::download_rules_file() {
         s3_download_rules_file,
         &Presigned_Url_Text_File_Downloader::download_complete,
         [](const QString& file_path, const QString& object_key) {
+            (void)file_path;
+            (void)object_key;
 
-            qDebug() << "Download success: path = " << file_path;
-            // qDebug() << "Download Object Key:" << object_key;
+            // qDebug() << "Download success: path = " << file_path;
+            qDebug() << "Download Object Key:" << object_key;
         });
 
 
@@ -1265,6 +1256,6 @@ void MainWindow::download_rules_file() {
 
 void MainWindow::on_pushButton_2_clicked()
 {
-    download_rules_file();
+    upload_rules_file();
 }
 
